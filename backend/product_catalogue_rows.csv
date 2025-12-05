@@ -1,0 +1,11 @@
+id,sku,product_name,category,conductor_material,conductor_size_sqmm,voltage_rating,insulation_thickness,overall_diameter,short_circuit_rating,current_rating_air,current_rating_ground,conductor_resistance,standard_iec,core
+6f2ca9ab-44ce-42d4-953f-03cd4c92c5ed,5b86598a-8665-46d3-8b5c-c9cabccaa8a1,LAN Cable Cat6,Networking Cable,Copper,0.2,0.3,0.4,6.5,0.02,1,1,93.8,EIA-TIA-568,8
+7ea504f4-b85f-40df-85d2-24d38954e851,f4be120c-8a35-4ddc-9f3b-5932e26d1894,Multicore Flexible Cable,Flexible Cable,Aluminium,1,0.6,0.6,5.4,0.05,8,7,28.3,IS-694,4
+ad6a347d-332c-4c97-b7fc-e7572d981fbd,3cd649df-eafb-4d23-b91a-a12673b0bb43,Speaker Wire Twin Parallel,Audio Cable,Copper,1,0.3,0.5,5.2,0.08,10,9,18.1,IEC-60228,2
+c3b6e3fd-8931-4f5f-b4ad-337585d1f986,83c1c89a-b14b-405a-b4c6-d2e1eb24aaf4,CCTV 3+1 Camera Cable,Surveillance Cable,Copper,0.5,0.6,0.5,6,0.07,6,5,39.5,ISO-9001,4
+d23a0bd1-0e89-4791-8c19-b7f77684767a,2c3f790b-6724-4773-bac9-8a544ef5b7f5,PVC Insulated House Wire,House Wire,Aluminium,1,1.1,0.6,3.2,0.06,8,7,28.5,IS-694,1
+d8a8cb63-c4f4-4521-b8ef-300a506572af,296cb546-460e-43e9-89d6-f9a9f107501c,Fire Survival Cable,FS Cable,Copper,2.5,1.1,0.9,9,0.5,28,26,7.41,BS-7629,2
+e93df220-b1bb-4df2-a628-31d05b50c2df,780b9fba-c225-4705-a003-acac0b1bfc03,Multicore Flexible Cable,Flexible Cable,Aluminium,0.75,0.45,0.6,4.9,0.04,6,5,38.2,IS-694,3
+ee144e76-da97-4bce-8424-2fb957f045ef,9ad99ec8-ff2e-4df6-a4b6-42924fcb78bc,Solar DC Cable (TUV),Solar Cable,Copper,4,1.5,0.8,7,0.6,35,33,4.95,TUV-2PFG-1169,1
+f4c8b232-0e60-4d2a-b073-b7fd6b8e3de5,fa71a591-5978-4f82-b217-893923f75eaa,PVC Insulated House Wire,House Wire,Aluminium,1.5,1.1,0.7,3.6,0.09,10,9,18.95,IS-694,1
+fa9517dc-b4d4-4f03-adcd-f6e1851371d8,fe11a20a-40f8-4638-9e31-b9256fcdcd30,Solar DC Cable (TUV),Solar Cable,Copper,6,1.5,0.8,8,0.85,44,42,3.3,TUV-2PFG-1169,1

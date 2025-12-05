@@ -24,7 +24,7 @@ const SolutionSection = () => {
               ].map((item, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                    <item.icon className="w-4 h-4 text-primary" />
+                    <item.icon className="w-4 h-4 text-primary" style = {{color: "#ffffff"}}/>
                   </div>
                   <span className="text-foreground">{item.text}</span>
                 </div>
