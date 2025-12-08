@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from config import RFP_LISTING_URL, BASE_URL
+import certifi
+import ssl
 
 def safe_text(element):
     """Safely extract text from BeautifulSoup element"""
@@ -10,7 +12,17 @@ def safe_text(element):
 def scrape_rfps():
     """Scrape RFP listings from the procurement portal"""
     try:
-        response = requests.get(RFP_LISTING_URL)
+        # Fix SSL certificate issue
+        try:
+            # Try to use certifi's certificate bundle
+            cert_path = certifi.where()
+            print(f"✓ Using certificate bundle: {cert_path}")
+            response = requests.get(RFP_LISTING_URL, verify=cert_path, timeout=10)
+        except Exception as ssl_err:
+            # Fallback: Disable SSL verification (use cautiously)
+            print(f"⚠ SSL verification failed, using unverified connection: {str(ssl_err)}")
+            response = requests.get(RFP_LISTING_URL, verify=False, timeout=10)
+        
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "lxml")
 
@@ -56,6 +68,12 @@ def scrape_rfps():
         print(f"✓ Successfully scraped {len(rfp_data)} RFPs")
         return df
         
+    except requests.exceptions.ConnectionError as conn_err:
+        print(f"✗ Connection error - check if URL is reachable: {str(conn_err)}")
+        return None
+    except requests.exceptions.Timeout as timeout_err:
+        print(f"✗ Request timeout - URL took too long to respond: {str(timeout_err)}")
+        return None
     except Exception as e:
         print(f"✗ Scraping failed: {str(e)}")
         return None

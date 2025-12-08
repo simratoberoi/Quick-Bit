@@ -1,10 +1,54 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from scrape import scrape_rfps
 from match import match_rfps_with_catalogue
 from generate import generate_proposal
 import pandas as pd
+from datetime import datetime
 
 app = Flask(__name__)
+CORS(app)
+
+
+# --------------------------------------------------------
+# Fix Date Function
+# --------------------------------------------------------
+def fix_date(date_str):
+    """Convert scraped date into ISO (YYYY-MM-DD). Returns None if invalid."""
+
+    if not date_str or not isinstance(date_str, str):
+        return None
+
+    # Remove time, timezone, commas
+    cleaned = (
+        date_str.replace("IST", "")
+                .replace("at", "")
+                .replace(",", "")
+                .strip()
+    )
+
+    # Extract only the date part
+    cleaned = cleaned.split(" ")[0]
+
+    # All possible formats from your scraper + site
+    formats = [
+        "%d-%b-%Y",     # 18-Dec-2025
+        "%d-%b-%y",     # 18-Dec-25
+        "%d-%m-%Y",     # 18-12-2025
+        "%d-%m-%y",     # 18-12-25   (actual site!)
+        "%d/%m/%Y",     # 18/12/2025
+        "%d %B %Y",     # 18 December 2025
+        "%b %d %Y",     # Dec 18 2025
+    ]
+
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(cleaned, fmt)
+            return dt.strftime("%Y-%m-%d")
+        except:
+            continue
+
+    return None
 
 # --------------------------------------------------------
 # Health Check
@@ -19,7 +63,8 @@ def home():
             "/run": "Run full pipeline (scrape → match → generate)",
             "/scrape": "Scrape RFPs only",
             "/match": "Match scraped RFPs with catalogue",
-            "/proposals": "Generate proposals from matched data"
+            "/proposals": "Generate proposals from matched data",
+            "/new-incoming": "Fetch new incoming RFPs with matches and priorities"
         }
     })
 
@@ -29,57 +74,54 @@ def home():
 # --------------------------------------------------------
 @app.route("/run", methods=["GET"])
 def run_pipeline():
-    """Complete pipeline: scrape RFPs, match with catalogue, generate proposals"""
     try:
         print("\n" + "="*60)
         print("STARTING RFP AUTOMATION PIPELINE")
         print("="*60)
-        
-        # 1. SCRAPE RFP LISTINGS
+
+        # 1. SCRAPE
         print("\n[1/3] Scraping RFP listings...")
         scraped_df = scrape_rfps()
-        
-        if scraped_df is None or scraped_df.empty:
-            return jsonify({
-                "error": "Scraping returned no results",
-                "step": "scraping"
-            }), 500
 
-        # 2. MATCH AGAINST CATALOGUE
+        if scraped_df is None or scraped_df.empty:
+            return jsonify({"error": "Scraping returned no results"}), 500
+
+        # Fix all scraped dates
+        if "deadline" in scraped_df.columns:
+            scraped_df["deadline"] = scraped_df["deadline"].apply(fix_date)
+
+        # 2. MATCH
         print("\n[2/3] Matching RFPs with product catalogue...")
         matched_df = match_rfps_with_catalogue(scraped_df)
-        
+
         if matched_df is None or matched_df.empty:
-            return jsonify({
-                "error": "Matching failed",
-                "step": "matching"
-            }), 500
+            return jsonify({"error": "Matching failed"}), 500
+
+        # Fix dates in match results too
+        if "deadline" in matched_df.columns:
+            matched_df["deadline"] = matched_df["deadline"].apply(fix_date)
 
         # 3. GENERATE PROPOSALS
         print("\n[3/3] Generating proposals...")
         proposals = []
         for idx, row in matched_df.iterrows():
             proposal_text = generate_proposal(row)
-            
+
             proposals.append({
                 "rfp_id": row.get("rfp_id"),
                 "title": row.get("title"),
                 "organization": row.get("organization"),
-                "deadline": row.get("deadline"),
+                "deadline": fix_date(row.get("deadline")),
                 "matched_sku": row.get("matched_sku"),
                 "match_percent": float(row.get("match_percent", 0)),
                 "matched_product": row.get("matched_product_name"),
                 "unit_price": float(row.get("unit_price", 0)),
                 "proposal": proposal_text
             })
-        
+
         print(f"\n✓ Pipeline completed successfully!")
-        print(f"  - Scraped: {len(scraped_df)} RFPs")
-        print(f"  - Matched: {len(matched_df)} RFPs")
-        print(f"  - Generated: {len(proposals)} proposals")
         print("="*60 + "\n")
 
-        # Return results
         return jsonify({
             "success": True,
             "summary": {
@@ -94,54 +136,140 @@ def run_pipeline():
         })
 
     except Exception as e:
-        print(f"\n✗ Pipeline failed: {str(e)}")
         import traceback
-        traceback.print_exc()
-        return jsonify({
-            "error": str(e),
-            "traceback": traceback.format_exc()
-        }), 500
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
 
 # --------------------------------------------------------
-# Individual Pipeline Steps (for debugging)
+# Scrape Only
 # --------------------------------------------------------
 @app.route("/scrape", methods=["GET"])
 def scrape_only():
-    """Scrape RFPs only"""
     try:
         df = scrape_rfps()
+
         if df is None or df.empty:
-            return jsonify({"error": "No RFPs found"}), 404
-        
+            return jsonify({"success": False, "error": "No RFPs found"}), 404
+
+        # Fix deadlines before returning to frontend
+        if "deadline" in df.columns:
+            df["deadline"] = df["deadline"].apply(fix_date)
+
         return jsonify({
             "success": True,
             "count": len(df),
             "data": df.to_dict(orient="records")
         })
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
+# --------------------------------------------------------
+# Match Only
+# --------------------------------------------------------
 @app.route("/match", methods=["POST"])
 def match_only():
-    """Match existing scraped data with catalogue"""
     try:
-        # Load scraped data
         df = pd.read_csv("scraped_rfps.csv")
+
+        # Ensure deadlines exist and are fixed
+        if "deadline" in df.columns:
+            df["deadline"] = df["deadline"].apply(fix_date)
+
         matched_df = match_rfps_with_catalogue(df)
-        
+
         if matched_df is None:
             return jsonify({"error": "Matching failed"}), 500
-        
+
+        if "deadline" in matched_df.columns:
+            matched_df["deadline"] = matched_df["deadline"].apply(fix_date)
+
         return jsonify({
             "success": True,
             "count": len(matched_df),
             "data": matched_df.to_dict(orient="records")
         })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# --------------------------------------------------------
+# New Incoming RFPs (for NewIncoming page)
+# --------------------------------------------------------
+@app.route("/new-incoming", methods=["GET"])
+def new_incoming():
+    """
+    Fetch newly scraped RFPs with match percentages and priority levels
+    Returns: List of new/incoming RFPs with priority assignment
+    """
+    try:
+        print("\n[NEW-INCOMING] Fetching and processing new RFPs...")
+        
+        # 1. SCRAPE fresh RFPs
+        scraped_df = scrape_rfps()
+        
+        if scraped_df is None or scraped_df.empty:
+            return jsonify({
+                "success": False,
+                "error": "No RFPs found during scraping",
+                "data": []
+            }), 404
+        
+        # Fix dates
+        if "deadline" in scraped_df.columns:
+            scraped_df["deadline"] = scraped_df["deadline"].apply(fix_date)
+        
+        # 2. MATCH with catalogue
+        matched_df = match_rfps_with_catalogue(scraped_df)
+        
+        if matched_df is None or matched_df.empty:
+            return jsonify({
+                "success": False,
+                "error": "Matching failed",
+                "data": []
+            }), 500
+        
+        # Fix dates in matched results
+        if "deadline" in matched_df.columns:
+            matched_df["deadline"] = matched_df["deadline"].apply(fix_date)
+        
+        # 3. Format response for frontend
+        new_incoming_data = []
+        for idx, row in matched_df.iterrows():
+            new_incoming_data.append({
+                "id": idx + 1,
+                "rfp_id": row.get("rfp_id", ""),
+                "title": row.get("title", ""),
+                "client": row.get("organization", ""),
+                "department": row.get("department", ""),
+                "deadline": row.get("deadline", ""),
+                "detection": "Recently detected",
+                "match_percent": float(row.get("match_percent", 0)),
+                "priority": row.get("priority", "Low"),
+                "matched_product": row.get("matched_product_name", ""),
+                "matched_sku": row.get("matched_sku", ""),
+                "category": row.get("category", "")
+            })
+        
+        print(f"✓ Retrieved {len(new_incoming_data)} new incoming RFPs")
+        
+        return jsonify({
+            "success": True,
+            "count": len(new_incoming_data),
+            "data": new_incoming_data
+        })
+    
+    except Exception as e:
+        import traceback
+        print(f"✗ Error in /new-incoming: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+            "data": []
+        }), 500
 
 # --------------------------------------------------------
 # Local Server
@@ -150,12 +278,4 @@ if __name__ == "__main__":
     print("\n" + "="*60)
     print("RFP AUTOMATION BACKEND SERVER")
     print("="*60)
-    print("\nEndpoints:")
-    print("  GET  /          - Health check")
-    print("  GET  /run       - Run complete pipeline")
-    print("  GET  /scrape    - Scrape RFPs only")
-    print("  POST /match     - Match scraped RFPs")
-    print("\nStarting server on http://127.0.0.1:5000")
-    print("="*60 + "\n")
-    
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -30,6 +30,15 @@ def extract_technical_specs(text):
     
     return specs
 
+def assign_priority(match_percent):
+    """Assign priority based on match percentage"""
+    if match_percent > 50:
+        return "High"
+    elif match_percent > 30:
+        return "Medium"
+    else:
+        return "Low"
+
 def match_rfps_with_catalogue(rfp_df):
     """Match RFPs with product catalogue using TF-IDF and technical specs"""
     try:
@@ -81,6 +90,9 @@ def match_rfps_with_catalogue(rfp_df):
         matched_indices = best_matches
         rfp_df["matched_sku"] = catalogue_df.iloc[matched_indices]["sku"].values
         rfp_df["match_percent"] = (best_scores * 100).round(2)
+        
+        # Assign priority based on match percentage
+        rfp_df["priority"] = rfp_df["match_percent"].apply(assign_priority)
         
         # Add product details
         rfp_df["matched_product_name"] = catalogue_df.iloc[matched_indices]["product_name"].values

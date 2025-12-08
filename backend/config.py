@@ -1,10 +1,10 @@
 # config.py - Configuration settings
 
 # RFP Listing URL (your Netlify hosted site)
-RFP_LISTING_URL = "https://mockrfplisting.netlify.app/"
+RFP_LISTING_URL = "https://rfp-listing.netlify.app/"
 
 # Base URL for any relative links (if needed)
-BASE_URL = "https://mockrfplisting.netlify.app"
+BASE_URL = "https://rfp-listing.netlify.app/"
 
 # Product Catalogue CSV Path
 PRODUCT_CATALOGUE_PATH = "/Users/sam/Downloads/web dev/RFP-Automation/product_catalogue_rows.csv"
