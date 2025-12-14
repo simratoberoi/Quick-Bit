@@ -462,12 +462,12 @@ def dashboard_rfps():
             "data": []
         }), 500
 
-        # --------------------------------------------------------
+# --------------------------------------------------------
 # Matched Products for Specific RFP
 # --------------------------------------------------------
 @app.route("/rfps/<rfp_id>/matched-products", methods=["GET"])
 def get_matched_products(rfp_id):
-   """
+    """
     Get top 3 matched products for a specific RFP
     """
     try:

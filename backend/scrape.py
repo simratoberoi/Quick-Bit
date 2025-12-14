@@ -41,8 +41,18 @@ def scrape_rfps():
             issue_date = safe_text(meta_values[1]) if len(meta_values) > 1 else ""
             deadline = safe_text(meta_values[2]) if len(meta_values) > 2 else ""
             
-            # Description - FIXED SELECTOR
-            description = safe_text(card.select_one(".description-text"))
+            # Description - get the first description-text (which is the actual description)
+            description_elements = card.select(".description-text")
+            description = safe_text(description_elements[0]) if len(description_elements) > 0 else ""
+            
+            # Submission email - get from the second description-text (Proposal Submission section)
+            submission_email = ""
+            if len(description_elements) > 1:
+                submission_text = safe_text(description_elements[1])
+                # Extract email from the text
+                # The text format is: "For submission of proposals, please send your complete documentation to: xlmwires@gmail.com"
+                if "xlmwires@gmail.com" in submission_text:
+                    submission_email = "xlmwires@gmail.com"
             
             # Additional info from info-grid
             info_values = card.select(".info-value")
@@ -59,6 +69,7 @@ def scrape_rfps():
                 "department": department,
                 "category": category,
                 "description": description,
+                "submission_email": submission_email,
                 "requirements": ""  # Initialize empty, will be populated if needed
             })
 
