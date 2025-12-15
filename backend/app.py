@@ -10,22 +10,17 @@ from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import csv
-
-# Import your custom modules
 from scrape import scrape_rfps
 from match import match_rfps_with_catalogue
 from generate import generate_proposal
 
-# Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
 
-# --------------------------------------------------------
-# Fix Date Function
-# --------------------------------------------------------
+
 def fix_date(date_str):
     """Convert scraped date into ISO (YYYY-MM-DD). Returns the original string if parsing fails."""
 
@@ -34,7 +29,6 @@ def fix_date(date_str):
 
     original_str = date_str.strip()
     
-    # Remove time, timezone, extra characters
     cleaned = (
         date_str.replace("IST", "")
                 .replace("at", "")
@@ -46,22 +40,21 @@ def fix_date(date_str):
     if not cleaned:
         return original_str
 
-    # Extract only the date part (before any time notation)
+    
     date_part = cleaned.split(" ")[0]
 
-    # All possible formats from your scraper + site
     formats = [
-        "%d-%b-%Y",     # 18-Dec-2025
-        "%d-%b-%y",     # 18-Dec-25
-        "%d-%m-%Y",     # 18-12-2025
-        "%d-%m-%y",     # 18-12-25
-        "%d/%m/%Y",     # 18/12/2025
-        "%d/%m/%y",     # 18/12/25
-        "%d %B %Y",     # 18 December 2025
-        "%d %b %Y",     # 18 Dec 2025
-        "%b %d %Y",     # Dec 18 2025
-        "%Y-%m-%d",     # 2025-12-18
-        "%m/%d/%Y",     # 12/18/2025
+        "%d-%b-%Y",     
+        "%d-%b-%y",     
+        "%d-%m-%Y",     
+        "%d-%m-%y",     
+        "%d/%m/%Y",    
+        "%d/%m/%y",   
+        "%d %B %Y",   
+        "%d %b %Y",    
+        "%b %d %Y",    
+        "%Y-%m-%d",    
+        "%m/%d/%Y",   
     ]
 
     for fmt in formats:
@@ -71,13 +64,10 @@ def fix_date(date_str):
         except:
             continue
 
-    # If parsing completely fails, return the original string
-    # This prevents "N/A" from appearing in the frontend
+   
     return original_str
 
-# --------------------------------------------------------
-# Health Check
-# --------------------------------------------------------
+
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({
@@ -95,9 +85,7 @@ def home():
     })
 
 
-# --------------------------------------------------------
-# Main Pipeline: Scrape → Match → Generate
-# --------------------------------------------------------
+
 @app.route("/run", methods=["GET"])
 def run_pipeline():
     try:
@@ -105,29 +93,29 @@ def run_pipeline():
         print("STARTING RFP AUTOMATION PIPELINE")
         print("="*60)
 
-        # 1. SCRAPE
+
         print("\n[1/3] Scraping RFP listings...")
         scraped_df = scrape_rfps()
 
         if scraped_df is None or scraped_df.empty:
             return jsonify({"error": "Scraping returned no results"}), 500
 
-        # Fix all scraped dates
+
         if "deadline" in scraped_df.columns:
             scraped_df["deadline"] = scraped_df["deadline"].apply(fix_date)
 
-        # 2. MATCH
+
         print("\n[2/3] Matching RFPs with product catalogue...")
         matched_df = match_rfps_with_catalogue(scraped_df)
 
         if matched_df is None or matched_df.empty:
             return jsonify({"error": "Matching failed"}), 500
 
-        # Fix dates in match results too
+
         if "deadline" in matched_df.columns:
             matched_df["deadline"] = matched_df["deadline"].apply(fix_date)
 
-        # 3. GENERATE PROPOSALS
+
         print("\n[3/3] Generating proposals...")
         proposals = []
         for idx, row in matched_df.iterrows():
@@ -166,9 +154,7 @@ def run_pipeline():
         return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
 
-# --------------------------------------------------------
-# Scrape Only
-# --------------------------------------------------------
+
 @app.route("/scrape", methods=["GET"])
 def scrape_only():
     try:
@@ -177,7 +163,6 @@ def scrape_only():
         if df is None or df.empty:
             return jsonify({"success": False, "error": "No RFPs found"}), 404
 
-        # Fix deadlines before returning to frontend
         if "deadline" in df.columns:
             df["deadline"] = df["deadline"].apply(fix_date)
 
@@ -191,15 +176,13 @@ def scrape_only():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-# --------------------------------------------------------
-# Match Only
-# --------------------------------------------------------
+
 @app.route("/match", methods=["POST"])
 def match_only():
     try:
         df = pd.read_csv("scraped_rfps.csv")
 
-        # Ensure deadlines exist and are fixed
+
         if "deadline" in df.columns:
             df["deadline"] = df["deadline"].apply(fix_date)
 
@@ -221,9 +204,7 @@ def match_only():
         return jsonify({"error": str(e)}), 500
 
 
-# --------------------------------------------------------
-# New Incoming RFPs (for NewIncoming page)
-# --------------------------------------------------------
+
 @app.route("/new-incoming", methods=["GET"])
 def new_incoming():
     """
@@ -234,7 +215,6 @@ def new_incoming():
     try:
         print("\n[NEW-INCOMING] Fetching and processing new RFPs...")
         
-        # 1. SCRAPE fresh RFPs
         scraped_df = scrape_rfps()
         
         if scraped_df is None or scraped_df.empty:
@@ -244,7 +224,7 @@ def new_incoming():
                 "data": []
             }), 404
         
-        # Filter out closed RFPs
+
         scraped_df = scraped_df[scraped_df["status"].str.lower() != "closed"]
         
         if scraped_df.empty:
@@ -254,11 +234,11 @@ def new_incoming():
                 "data": []
             }), 404
         
-        # Fix dates
+
         if "deadline" in scraped_df.columns:
             scraped_df["deadline"] = scraped_df["deadline"].apply(fix_date)
         
-        # 2. MATCH with catalogue
+
         matched_df = match_rfps_with_catalogue(scraped_df)
         
         if matched_df is None or matched_df.empty:
@@ -268,11 +248,10 @@ def new_incoming():
                 "data": []
             }), 500
         
-        # Fix dates in matched results
+
         if "deadline" in matched_df.columns:
             matched_df["deadline"] = matched_df["deadline"].apply(fix_date)
-        
-        # 3. Format response for frontend
+
         new_incoming_data = []
         for idx, row in matched_df.iterrows():
             new_incoming_data.append({
@@ -309,9 +288,7 @@ def new_incoming():
             "data": []
         }), 500
 
-# --------------------------------------------------------
-# Submitted RFPs (Closed Status)
-# --------------------------------------------------------
+
 @app.route("/submitted", methods=["GET"])
 def submitted():
     """
@@ -323,7 +300,7 @@ def submitted():
         
         submitted_file = "submitted_rfps.csv"
         
-        # If no submissions yet, return empty
+
         if not os.path.exists(submitted_file):
             return jsonify({
                 "success": True,
@@ -332,7 +309,7 @@ def submitted():
                 "data": []
             }), 200
         
-        # Read submitted RFP IDs
+
         submitted_ids = []
         try:
             with open(submitted_file, 'r', newline='') as f:
@@ -356,7 +333,7 @@ def submitted():
                 "data": []
             }), 200
         
-        # 1. SCRAPE all RFPs
+
         scraped_df = scrape_rfps()
         
         if scraped_df is None or scraped_df.empty:
@@ -367,7 +344,7 @@ def submitted():
                 "data": []
             }), 200
         
-        # Filter only submitted RFPs
+
         submitted_df = scraped_df[scraped_df['rfp_id'].isin(submitted_ids)]
         
         if submitted_df.empty:
@@ -378,21 +355,20 @@ def submitted():
                 "data": []
             }), 200
         
-        # Fix dates
+
         if "deadline" in submitted_df.columns:
             submitted_df["deadline"] = submitted_df["deadline"].apply(fix_date)
         
-        # 2. MATCH with catalogue for additional details
+
         matched_df = match_rfps_with_catalogue(submitted_df)
         
         if matched_df is None:
             matched_df = submitted_df
         else:
-            # Fix dates in matched results
             if "deadline" in matched_df.columns:
                 matched_df["deadline"] = matched_df["deadline"].apply(fix_date)
         
-        # 3. Format response for frontend
+
         submitted_data = []
         for idx, row in matched_df.iterrows():
             submitted_data.append({
@@ -428,9 +404,6 @@ def submitted():
             "data": []
         }), 200
 
-# --------------------------------------------------------
-# All RFPs for Dashboard
-# --------------------------------------------------------
 @app.route("/dashboard-rfps", methods=["GET"])
 def dashboard_rfps():
     """
@@ -441,7 +414,7 @@ def dashboard_rfps():
     try:
         print("\n[DASHBOARD] Fetching all RFPs for dashboard...")
         
-        # 1. SCRAPE all RFPs
+
         scraped_df = scrape_rfps()
         
         if scraped_df is None or scraped_df.empty:
@@ -451,24 +424,23 @@ def dashboard_rfps():
                 "data": []
             }), 404
         
-        # Fix dates
+
         if "deadline" in scraped_df.columns:
             scraped_df["deadline"] = scraped_df["deadline"].apply(fix_date)
         
-        # 2. MATCH with catalogue for additional details
+
         matched_df = match_rfps_with_catalogue(scraped_df)
         
         if matched_df is None:
             matched_df = scraped_df
         else:
-            # Fix dates in matched results
+
             if "deadline" in matched_df.columns:
                 matched_df["deadline"] = matched_df["deadline"].apply(fix_date)
         
-        # 3. Map status and format response for frontend
+
         dashboard_data = []
         for idx, row in matched_df.iterrows():
-            # Map scraped status to display status
             original_status = str(row.get("status", "")).lower()
             if original_status == "closed":
                 display_status = "Submitted"
@@ -511,9 +483,7 @@ def dashboard_rfps():
             "data": []
         }), 500
 
-# --------------------------------------------------------
-# Matched Products for Specific RFP
-# --------------------------------------------------------
+
 @app.route("/rfps/<rfp_id>/matched-products", methods=["GET"])
 def get_matched_products(rfp_id):
     """
@@ -522,11 +492,11 @@ def get_matched_products(rfp_id):
     try:
         print(f"\n[MATCHED-PRODUCTS] Fetching matches for RFP: {rfp_id}")
         
-        # 1. Load scraped RFPs
+
         try:
             scraped_df = pd.read_csv("scraped_rfps.csv")
         except FileNotFoundError:
-            # If no saved file, scrape fresh
+
             scraped_df = scrape_rfps()
             if scraped_df is None or scraped_df.empty:
                 return jsonify({
@@ -534,7 +504,7 @@ def get_matched_products(rfp_id):
                     "error": "No RFPs found"
                 }, 404)
         
-        # 2. Find the specific RFP
+
         rfp_row = scraped_df[scraped_df['rfp_id'] == rfp_id]
         
         if rfp_row.empty:
@@ -543,7 +513,7 @@ def get_matched_products(rfp_id):
                 "error": f"RFP with ID '{rfp_id}' not found"
             }, 404)
         
-        # 3. Load product catalogue
+
         try:
             catalogue_df = pd.read_csv("product_catalogue_rows.csv")
         except FileNotFoundError:
@@ -551,12 +521,10 @@ def get_matched_products(rfp_id):
                 "success": False,
                 "error": "Product catalogue not found"
             }), 500
-        
-        # 4. Prepare text for matching
+
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.metrics.pairwise import cosine_similarity
-        
-        # Build RFP combined text
+
         rfp_text = (
             str(rfp_row.iloc[0].get("title", "")) + " " +
             str(rfp_row.iloc[0].get("description", "")) + " " +
@@ -564,7 +532,7 @@ def get_matched_products(rfp_id):
             str(rfp_row.iloc[0].get("category", ""))
         )
         
-        # Build catalogue combined text
+
         catalogue_df["combined_text"] = (
             catalogue_df["product_name"].fillna("").astype(str) + " " +
             catalogue_df["category"].fillna("").astype(str) + " " +
@@ -573,8 +541,7 @@ def get_matched_products(rfp_id):
             catalogue_df["conductor_size_sqmm"].fillna("").astype(str) + " sqmm " +
             catalogue_df["voltage_rating"].fillna("").astype(str) + " kV"
         )
-        
-        # 5. Calculate similarity scores
+
         vectorizer = TfidfVectorizer(
             ngram_range=(1, 2),
             min_df=1,
@@ -586,18 +553,17 @@ def get_matched_products(rfp_id):
         
         similarity_scores = cosine_similarity(tfidf_rfp, tfidf_catalogue)[0]
         
-        # 6. Get top 3 matches only
-        top_n = 3  # Changed from 10 to 3
+
+        top_n = 3 
         top_indices = similarity_scores.argsort()[-top_n:][::-1]
         top_scores = similarity_scores[top_indices]
         
-        # 7. Build matched products list
+
         matched_products = []
         for idx, score in zip(top_indices, top_scores):
             product = catalogue_df.iloc[idx]
             match_percent = round(score * 100, 2)
-            
-            # Assign priority
+
             if match_percent > 50:
                 priority = "High"
             elif match_percent > 30:
@@ -619,7 +585,7 @@ def get_matched_products(rfp_id):
                 "priority": priority
             })
         
-        # 8. Build RFP details
+
         rfp_details = {
             "rfp_id": str(rfp_row.iloc[0].get("rfp_id", "")),
             "title": str(rfp_row.iloc[0].get("title", "")),
@@ -649,32 +615,27 @@ def get_matched_products(rfp_id):
             "traceback": traceback.format_exc()
         }), 500
 
-# --------------------------------------------------------
-# Mark RFP as Submitted
-# --------------------------------------------------------
+
 def mark_rfp_as_submitted(rfp_id):
     """
     Track submitted RFP in a separate CSV file
     """
     try:
         submitted_file = "submitted_rfps.csv"
-        
-        # Read existing submitted RFPs
+
         submitted_rfps = []
         if os.path.exists(submitted_file):
             with open(submitted_file, 'r', newline='') as f:
                 reader = csv.DictReader(f)
                 if reader.fieldnames:
                     submitted_rfps = list(reader)
-        
-        # Check if RFP already submitted
+
         if not any(rfp['rfp_id'] == rfp_id for rfp in submitted_rfps):
             submitted_rfps.append({
                 'rfp_id': rfp_id,
                 'submitted_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
-            
-            # Write back to CSV
+
             with open(submitted_file, 'w', newline='') as f:
                 writer = csv.DictWriter(f, fieldnames=['rfp_id', 'submitted_date'])
                 writer.writeheader()
@@ -691,9 +652,6 @@ def mark_rfp_as_submitted(rfp_id):
         return False
 
 
-# --------------------------------------------------------
-# Check if RFP is Submitted
-# --------------------------------------------------------
 def is_rfp_submitted(rfp_id):
     """
     Check if an RFP has been submitted
@@ -714,9 +672,6 @@ def is_rfp_submitted(rfp_id):
         print(f"✗ Error checking submitted status: {str(e)}")
         return False
 
-# --------------------------------------------------------
-# Submit Proposal with Email
-# --------------------------------------------------------
 @app.route("/submit-proposal", methods=["POST"])
 def submit_proposal():
     """
@@ -730,23 +685,22 @@ def submit_proposal():
         rfp_title = data.get("rfp_title")
         organization = data.get("organization")
         proposal_text = data.get("proposal_text")
-        from_email = data.get("from_email", "simratpyrotech@gmail.com")
-        to_email = data.get("to_email", "procurement@example.com")
+        from_email = data.get("from_email", "mockasianpaints@gmail.com")
+        to_email = data.get("to_email", "simratoberoi2006@gmail.com")
         
         print(f"\n[SUBMIT] Submitting proposal for RFP: {rfp_id}")
         
-        # Email configuration
-        sender_email = "simratpyrotech@gmail.com"
-        sender_password = os.getenv("EMAIL_PASSWORD")  # Reads from .env
+
+        sender_email = "mockasianpaints@gmail.com"
+        sender_password = os.getenv("EMAIL_PASSWORD")
         
         try:
-            # Create email message
+
             msg = MIMEMultipart("alternative")
             msg["Subject"] = f"Proposal Submission for {rfp_title}"
             msg["From"] = sender_email
             msg["To"] = to_email
-            
-            # Email body
+
             email_body = f"""
 Dear Procurement Team,
 
@@ -769,14 +723,13 @@ This is an automated submission. Please do not reply to this email.
             part = MIMEText(email_body, "plain")
             msg.attach(part)
             
-            # Send email
+
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
                 server.login(sender_email, sender_password)
                 server.sendmail(sender_email, [to_email], msg.as_string())
             
             print(f"✓ Proposal email sent to {to_email}")
-            
-            # Mark RFP as submitted in tracking file
+
             mark_rfp_as_submitted(rfp_id)
             
             return jsonify({
@@ -802,9 +755,7 @@ This is an automated submission. Please do not reply to this email.
             "traceback": traceback.format_exc()
         }), 500
 
-# --------------------------------------------------------
-# Local Server
-# --------------------------------------------------------
+
 if __name__ == "__main__":
     print("\n" + "="*60)
     print("RFP AUTOMATION BACKEND SERVER")

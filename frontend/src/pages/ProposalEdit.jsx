@@ -200,6 +200,7 @@ simratpyrotech@gmail.com
     setSubmitting(true);
     setError(null);
     setSuccess(false);
+    
 
     try {
       const response = await fetch(`${BACKEND_URL}/submit-proposal`, {

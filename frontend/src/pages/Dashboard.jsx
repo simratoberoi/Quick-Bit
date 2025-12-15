@@ -12,28 +12,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-// Dashboard Stats (static)
-// const stats = [
-//   { label: "Active RFPs", value: "24", icon: FileText, change: "+3 this week" },
-//   {
-//     label: "Proposals Sent",
-//     value: "156",
-//     icon: Send,
-//     change: "+12 this month",
-//   },
-//   {
-//     label: "Win Rate",
-//     value: "42%",
-//     icon: TrendingUp,
-//     change: "+5% vs last quarter",
-//   },
-//   {
-//     label: "Avg Response Time",
-//     value: "2.4 days",
-//     icon: Clock,
-//     change: "-1.2 days improved",
-//   },
-// ];
 
 const Dashboard = () => {
   const [rfpData, setRfpData] = useState([]);
