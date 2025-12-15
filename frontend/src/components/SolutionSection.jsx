@@ -11,7 +11,7 @@ const SolutionSection = () => {
               AI That Wins Proposals For You
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              RFPro automates your entire proposal workflow — from discovering opportunities to 
+              QuickBid automates your entire proposal workflow — from discovering opportunities to 
               submitting winning proposals. Let AI handle the grunt work while your team focuses on strategy.
             </p>
 

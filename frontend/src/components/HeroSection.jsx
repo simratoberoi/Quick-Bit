@@ -11,13 +11,7 @@ const HeroSection = () => {
       
       <div className="container mx-auto px-6 py-20">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-secondary px-4 py-2 rounded-full mb-8 animate-fade-up">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-secondary-foreground">
-              AI-Powered RFP Automation
-            </span>
-          </div>
-          
+         
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 animate-fade-up" style={{ animationDelay: "0.1s" }}>
             Automate RFPs
             <br />
@@ -57,7 +51,7 @@ const HeroSection = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto mt-20 animate-fade-up" style={{ animationDelay: "0.4s" }}>
           {[
             { value: "85%", label: "Time Saved" },
-            { value: "3x", label: "More Proposals" },
+            { value: "4x", label: "More Proposals" },
             { value: "99%", label: "Accuracy" },
             { value: "40%", label: "Higher Win Rate" },
           ].map((stat, index) => (

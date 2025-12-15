@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
-  Filter,
   RefreshCw,
   AlertCircle,
   Package,
@@ -112,7 +111,7 @@ const NewIncoming = () => {
   });
 
   return (
-    <main className="flex-1 p-8 bg-gray-50 min-h-screen">
+    <main className="flex-1 p-6 lg:p-8 bg-gray-50 min-h-screen transition-all duration-300">
       {/* Title */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">
@@ -125,9 +124,9 @@ const NewIncoming = () => {
 
       {/* Error */}
       {error && !loading && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-          <AlertCircle size={20} className="text-red-600 mt-0.5" />
-          <div>
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex flex-col sm:flex-row gap-3">
+          <AlertCircle size={20} className="text-red-600 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
             <p className="text-sm font-semibold text-red-800">
               Error loading RFPs
             </p>
@@ -143,7 +142,7 @@ const NewIncoming = () => {
       )}
 
       {/* Search & Actions */}
-      <div className="flex justify-between items-center mb-6 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mb-6 gap-4">
         <div className="relative flex-1 max-w-md">
           <Search size={16} className="absolute left-3 top-2.5 text-gray-400" />
           <input
@@ -157,14 +156,12 @@ const NewIncoming = () => {
         <button
           onClick={fetchNewIncoming}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 border rounded-lg text-sm bg-white"
+          className="flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm bg-white flex-shrink-0"
         >
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
-
-        <button className="px-4 py-2 border rounded-lg text-sm flex items-center gap-2 bg-white">
-          <Filter size={16} /> Filter
+          <span className="hidden sm:inline">
+            {loading ? "Refreshing..." : "Refresh"}
+          </span>
         </button>
       </div>
 
@@ -185,7 +182,7 @@ const NewIncoming = () => {
 
       {/* Table */}
       {!loading && filteredData.length > 0 && (
-        <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white border rounded-xl shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-xs uppercase border-b">
               <tr>
@@ -243,5 +240,6 @@ const NewIncoming = () => {
     </main>
   );
 };
+
 
 export default NewIncoming;

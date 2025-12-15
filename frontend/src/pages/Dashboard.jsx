@@ -214,12 +214,12 @@ const Dashboard = () => {
   };
 
   return (
-    <main className="flex-1">
+    <main className="flex-1 transition-all duration-300">
       {/* WHITE HEADER BAR */}
-      <div className="bg-white border-b px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+      <div className="bg-white border-b px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sticky top-0 z-10">
         <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
 
-        <div className="relative w-80 max-w-md">
+        <div className="relative w-full sm:w-80 max-w-md">
           <Search
             size={16}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -235,7 +235,7 @@ const Dashboard = () => {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="px-8 py-6 space-y-10">
+      <div className="px-6 lg:px-8 py-6 space-y-10">
         {/* Stats */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, i) => (
@@ -254,17 +254,17 @@ const Dashboard = () => {
 
         {/* RECENT RFP TABLE */}
         <div className="bg-white border rounded-xl shadow-sm">
-          <div className="p-5 border-b flex justify-between items-center">
+          <div className="p-4 lg:p-5 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="font-semibold text-lg text-gray-900">Recent RFPs</h2>
 
-            <div className="flex items-center gap-3">
-              <div className="relative">
+            <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+              <div className="relative flex-1 sm:flex-none sm:w-44">
                 <Search
                   size={15}
                   className="absolute left-3 top-2 text-gray-500"
                 />
                 <input
-                  className="pl-9 pr-4 py-2 border rounded-md text-sm w-44"
+                  className="pl-9 pr-4 py-2 border rounded-md text-sm w-full"
                   placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -274,7 +274,7 @@ const Dashboard = () => {
               <button
                 onClick={fetchDashboardRFPs}
                 disabled={loading}
-                className="flex items-center gap-2 px-3 py-2 border rounded-md text-sm hover:bg-gray-100 disabled:bg-gray-100 transition"
+                className="flex items-center gap-2 px-3 py-2 border rounded-md text-sm hover:bg-gray-100 disabled:bg-gray-100 transition flex-shrink-0"
               >
                 <RefreshCw
                   size={15}
@@ -282,7 +282,7 @@ const Dashboard = () => {
                 />
               </button>
 
-              <button className="px-3 py-2 border rounded-md text-sm flex items-center gap-2 hover:bg-gray-100">
+              <button className="px-3 py-2 border rounded-md text-sm flex items-center gap-2 hover:bg-gray-100 flex-shrink-0">
                 <Filter size={15} /> Filter
               </button>
             </div>
@@ -322,56 +322,58 @@ const Dashboard = () => {
           {/* Table */}
           {!loading && filteredData.length > 0 && (
             <>
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
-                  <tr>
-                    <th className="px-6 py-3 text-left">RFP Title</th>
-                    <th className="px-6 py-3 text-left">
-                      Client / Issuing Organization
-                    </th>
-                    <th className="px-6 py-3 text-left">Deadline</th>
-                    <th className="px-6 py-3 text-left">Match</th>
-                    <th className="px-6 py-3 text-left">Status</th>
-                    <th className="px-6 py-3" />
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredData.map((rfp) => (
-                    <tr
-                      key={rfp.id}
-                      className="border-b hover:bg-gray-50 transition"
-                    >
-                      <td className="px-6 py-4 text-gray-900 font-medium max-w-xs whitespace-normal">
-                        {rfp.title}
-                      </td>
-                      <td className="px-6 py-4 text-gray-800 max-w-xs whitespace-normal">
-                        {rfp.client}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">
-                        {formatDate(rfp.deadline)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-blue-600 font-semibold">
-                        {rfp.match.toFixed(1)}%
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 text-xs rounded-md font-medium ${getStatusStyles(
-                            rfp.status
-                          )}`}
-                        >
-                          {rfp.status}
-                        </span>
-                      </td>
-                      <td className="px-6 text-right">
-                        <button className="p-1.5 hover:bg-gray-200 rounded-md transition">
-                          <MoreVertical size={16} className="text-gray-500" />
-                        </button>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+                    <tr>
+                      <th className="px-6 py-3 text-left">RFP Title</th>
+                      <th className="px-6 py-3 text-left">
+                        Client / Issuing Organization
+                      </th>
+                      <th className="px-6 py-3 text-left">Deadline</th>
+                      <th className="px-6 py-3 text-left">Match</th>
+                      <th className="px-6 py-3 text-left">Status</th>
+                      <th className="px-6 py-3" />
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody>
+                    {filteredData.map((rfp) => (
+                      <tr
+                        key={rfp.id}
+                        className="border-b hover:bg-gray-50 transition"
+                      >
+                        <td className="px-6 py-4 text-gray-900 font-medium max-w-xs whitespace-normal">
+                          {rfp.title}
+                        </td>
+                        <td className="px-6 py-4 text-gray-800 max-w-xs whitespace-normal">
+                          {rfp.client}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">
+                          {formatDate(rfp.deadline)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-blue-600 font-semibold">
+                          {rfp.match.toFixed(1)}%
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-md font-medium ${getStatusStyles(
+                              rfp.status
+                            )}`}
+                          >
+                            {rfp.status}
+                          </span>
+                        </td>
+                        <td className="px-6 text-right">
+                          <button className="p-1.5 hover:bg-gray-200 rounded-md transition">
+                            <MoreVertical size={16} className="text-gray-500" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               {/* Results Count */}
               <div className="px-6 py-3 bg-gray-50 border-t text-sm text-gray-600">
