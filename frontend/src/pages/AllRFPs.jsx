@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { Search, RefreshCw, AlertCircle, ChevronDown, MoreVertical } from "lucide-react";
+import {
+  Search,
+  RefreshCw,
+  AlertCircle,
+  ChevronDown,
+  MoreVertical,
+} from "lucide-react";
 
 const BACKEND_URL = "http://127.0.0.1:5000";
 
@@ -36,7 +42,7 @@ const AllRFPs = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
 
-  // Fetch submitted RFP IDs
+
   const fetchSubmittedRfpIds = async () => {
     try {
       const response = await fetch(`${BACKEND_URL}/submitted`);
@@ -49,7 +55,7 @@ const AllRFPs = () => {
     }
   };
 
-  // Fetch all RFPs
+
   const fetchRFPs = async () => {
     setLoading(true);
     setError(null);
@@ -61,11 +67,19 @@ const AllRFPs = () => {
         const enriched = result.data.map((rfp, idx) => ({
           ...rfp,
           organization: rfp.organization || `Organization ${idx + 1}`,
-          deadline: rfp.deadline || new Date(Date.now() + (idx + 1) * 86400000 * 10).toISOString().split("T")[0],
+          deadline:
+            rfp.deadline ||
+            new Date(Date.now() + (idx + 1) * 86400000 * 10)
+              .toISOString()
+              .split("T")[0],
           department: rfp.department || `Department ${idx + 1}`,
           category: rfp.category || "General",
-          issue_date: rfp.issue_date || new Date(Date.now() - 86400000 * 5).toISOString().split("T")[0],
-          status: submittedRfpIds.includes(rfp.rfp_id) ? "Submitted" : rfp.status,
+          issue_date:
+            rfp.issue_date ||
+            new Date(Date.now() - 86400000 * 5).toISOString().split("T")[0],
+          status: submittedRfpIds.includes(rfp.rfp_id)
+            ? "Submitted"
+            : rfp.status,
         }));
         setRfpData(enriched);
       } else {
@@ -82,15 +96,27 @@ const AllRFPs = () => {
   useEffect(() => {
     const init = async () => {
       await fetchSubmittedRfpIds();
-      await fetchRFPs();
     };
     init();
   }, []);
 
-  const toggleDropdown = (key) => setOpenFilter(openFilter === key ? null : key);
+  useEffect(() => {
+    if (submittedRfpIds.length >= 0) {
+      fetchRFPs();
+    }
+  }, [submittedRfpIds]);
 
-  const uniqueStatuses = ["All", ...new Set(rfpData.map((r) => r.status).filter(Boolean))];
-  const uniqueCategories = ["All", ...new Set(rfpData.map((r) => r.category).filter(Boolean))];
+  const toggleDropdown = (key) =>
+    setOpenFilter(openFilter === key ? null : key);
+
+  const uniqueStatuses = [
+    "All",
+    ...new Set(rfpData.map((r) => r.status).filter(Boolean)),
+  ];
+  const uniqueCategories = [
+    "All",
+    ...new Set(rfpData.map((r) => r.category).filter(Boolean)),
+  ];
 
   const filteredData = rfpData.filter((rfp) => {
     const matchesSearch =
@@ -99,7 +125,8 @@ const AllRFPs = () => {
       rfp.organization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       rfp.rfp_id?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "All" || rfp.status === statusFilter;
-    const matchesCategory = categoryFilter === "All" || rfp.category === categoryFilter;
+    const matchesCategory =
+      categoryFilter === "All" || rfp.category === categoryFilter;
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
@@ -109,7 +136,9 @@ const AllRFPs = () => {
       <div className="px-6 lg:px-10 pt-8 pb-6 bg-white border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">All RFPs</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage and track all incoming Requests for Proposals</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage and track all incoming Requests for Proposals
+          </p>
         </div>
         <button
           onClick={fetchRFPs}
@@ -117,18 +146,30 @@ const AllRFPs = () => {
           className="flex items-center gap-2 px-5 py-2.5 bg-white border rounded-lg hover:bg-gray-50 disabled:bg-gray-100 transition font-medium text-sm"
         >
           <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-          <span className="hidden sm:inline">{loading ? "Refreshing..." : "Refresh"}</span>
+          <span className="hidden sm:inline">
+            {loading ? "Refreshing..." : "Refresh"}
+          </span>
         </button>
       </div>
 
       {/* ERROR */}
       {error && !loading && (
         <div className="mx-6 lg:mx-10 mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex flex-col sm:flex-row gap-3">
-          <AlertCircle size={20} className="text-red-600 mt-0.5 flex-shrink-0" />
+          <AlertCircle
+            size={20}
+            className="text-red-600 mt-0.5 flex-shrink-0"
+          />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-red-800">Error loading RFPs</p>
+            <p className="text-sm font-semibold text-red-800">
+              Error loading RFPs
+            </p>
             <p className="text-xs text-red-600 mt-1">{error}</p>
-            <button onClick={fetchRFPs} className="text-xs text-red-700 underline mt-2">Try again</button>
+            <button
+              onClick={fetchRFPs}
+              className="text-xs text-red-700 underline mt-2"
+            >
+              Try again
+            </button>
           </div>
         </div>
       )}
@@ -137,7 +178,10 @@ const AllRFPs = () => {
       {loading && (
         <div className="flex justify-center items-center py-32">
           <div className="text-center">
-            <RefreshCw size={48} className="animate-spin text-blue-600 mx-auto mb-4" />
+            <RefreshCw
+              size={48}
+              className="animate-spin text-blue-600 mx-auto mb-4"
+            />
             <p className="text-gray-600 font-medium">Loading RFPs...</p>
           </div>
         </div>
@@ -171,7 +215,10 @@ const AllRFPs = () => {
                   {uniqueStatuses.map((s) => (
                     <div
                       key={s}
-                      onClick={() => { setStatusFilter(s); setOpenFilter(null); }}
+                      onClick={() => {
+                        setStatusFilter(s);
+                        setOpenFilter(null);
+                      }}
                       className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                     >
                       {s}
@@ -195,7 +242,10 @@ const AllRFPs = () => {
                   {uniqueCategories.map((c) => (
                     <div
                       key={c}
-                      onClick={() => { setCategoryFilter(c); setOpenFilter(null); }}
+                      onClick={() => {
+                        setCategoryFilter(c);
+                        setOpenFilter(null);
+                      }}
                       className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                     >
                       {c}
@@ -226,12 +276,24 @@ const AllRFPs = () => {
               <tbody className="divide-y">
                 {filteredData.map((rfp) => (
                   <tr key={rfp.rfp_id} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 font-mono text-xs text-blue-600">{rfp.rfp_id}</td>
-                    <td className="px-6 py-4 font-medium text-gray-900">{rfp.title}</td>
-                    <td className="px-6 py-4 text-gray-700">{rfp.organization}</td>
-                    <td className="px-6 py-4 text-center text-gray-700">{formatDate(rfp.deadline)}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-blue-600">
+                      {rfp.rfp_id}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      {rfp.title}
+                    </td>
+                    <td className="px-6 py-4 text-gray-700">
+                      {rfp.organization}
+                    </td>
+                    <td className="px-6 py-4 text-center text-gray-700">
+                      {formatDate(rfp.deadline)}
+                    </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`px-3 py-1 text-xs rounded-full font-semibold ${getStatusStyles(rfp.status)}`}>
+                      <span
+                        className={`px-3 py-1 text-xs rounded-full font-semibold ${getStatusStyles(
+                          rfp.status
+                        )}`}
+                      >
                         {rfp.status}
                       </span>
                     </td>
@@ -252,8 +314,12 @@ const AllRFPs = () => {
       {!loading && filteredData.length === 0 && !error && (
         <div className="px-6 lg:px-10 py-32 text-center">
           <AlertCircle size={56} className="text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-900 font-semibold text-lg">No matching RFPs</p>
-          <p className="text-sm text-gray-500 mt-2">Try adjusting your search or filters</p>
+          <p className="text-gray-900 font-semibold text-lg">
+            No matching RFPs
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Try adjusting your search or filters
+          </p>
         </div>
       )}
     </main>
