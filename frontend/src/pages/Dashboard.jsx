@@ -11,6 +11,7 @@ import {
   RefreshCw,
   AlertCircle,
 } from "lucide-react";
+const BACKEND_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard = () => {
   const [rfpData, setRfpData] = useState([]);

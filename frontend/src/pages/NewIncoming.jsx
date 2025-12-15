@@ -8,8 +8,8 @@ const getPriorityStyles = (priority) => {
   return "bg-green-100 text-green-700";
 };
 
-const BACKEND_URL = "http://127.0.0.1:5000";
 
+const BACKEND_URL = import.meta.env.VITE_API_URL;
 const NewIncoming = () => {
   const [rfpData, setRfpData] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { RefreshCw, AlertCircle, Download } from "lucide-react";
 import html2pdf from "html2pdf.js";
 
-const BACKEND_URL = "http://127.0.0.1:5000";
+ const BACKEND_URL = import.meta.env.VITE_API_URL;
 
 const SubmittedRFPs = () => {
   const [submittedData, setSubmittedData] = useState([]);

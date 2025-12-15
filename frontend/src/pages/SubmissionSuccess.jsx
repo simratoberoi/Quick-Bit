@@ -10,7 +10,7 @@ const SubmissionSuccess = () => {
   const [rfpData, setRfpData] = useState(null);
   const [downloading, setDownloading] = useState(false);
 
-  const BACKEND_URL = "http://127.0.0.1:5000";
+  const BACKEND_URL = import.meta.env.VITE_API_URL;
 
   // Get RFP data from location state
   useEffect(() => {
