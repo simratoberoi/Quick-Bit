@@ -1,9 +1,15 @@
-import { Button } from "/src/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 const HeroSection = () => {
   const navigate = useNavigate();
+
+  const handleGetStarted = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Button clicked!");
+    navigate('/dashboard');
+  };
 
   return (
     <section className="relative min-h-screen gradient-hero flex items-center pt-20">
@@ -26,11 +32,10 @@ const HeroSection = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-            <Button
-              variant="hero"
-              size="xl"
-              className="group"
-              onClick={() => navigate('/dashboard')}
+            <button
+              type="button"
+              onClick={handleGetStarted}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 group"
               style={{
                 backgroundColor: "#1B76FF",
                 color: "#FFFFFF",
@@ -39,11 +44,13 @@ const HeroSection = () => {
                 borderRadius: "0.75rem",
                 border: "none",
                 cursor: "pointer",
-                transition: "all 0.2s ease-in-out"
+                transition: "all 0.2s ease-in-out",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "rgba(0,0,0,0)"
               }}
             >
               Get Started
-            </Button>
+            </button>
           </div>
         </div>
 
