@@ -13,6 +13,7 @@ import csv
 from scrape import scrape_rfps
 from match import match_rfps_with_catalogue
 from generate import generate_proposal
+from smtplib import SMTPAuthenticationError
 
 load_dotenv()
 
@@ -679,29 +680,44 @@ def submit_proposal():
     Marks RFP as submitted and sends email to organization contact
     """
     try:
-        data = request.json
+        # safer JSON parsing
+        data = request.get_json(force=True, silent=True) or {}
         
         rfp_id = data.get("rfp_id")
-        rfp_title = data.get("rfp_title")
-        organization = data.get("organization")
-        proposal_text = data.get("proposal_text")
-        from_email = data.get("from_email", "mockasianpaints@gmail.com")
-        to_email = data.get("to_email", "simratoberoi2006@gmail.com")
-        
+        rfp_title = data.get("rfp_title", "")
+        organization = data.get("organization", "")
+        proposal_text = data.get("proposal_text", "")
+        to_email = data.get("to_email", None)
+
+        if not rfp_id:
+            return jsonify({"success": False, "error": "Missing rfp_id"}), 400
+        if not to_email:
+            return jsonify({"success": False, "error": "Missing to_email"}), 400
+
         print(f"\n[SUBMIT] Submitting proposal for RFP: {rfp_id}")
-        
 
-        sender_email = "mockasianpaints@gmail.com"
+        sender_email = os.getenv("EMAIL_SENDER", "mockasianpaints@gmail.com")
         sender_password = os.getenv("EMAIL_PASSWORD")
-        
-        try:
+        send_email_flag = os.getenv("SEND_EMAIL", "false").lower() == "true"
 
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = f"Proposal Submission for {rfp_title}"
-            msg["From"] = sender_email
-            msg["To"] = to_email
+        # If password not provided and send_email_flag is false -> dry-run (do not call SMTP)
+        if not sender_password and not send_email_flag:
+            print("⚠ EMAIL_PASSWORD not set and SEND_EMAIL != 'true' -> performing dry-run (no SMTP).")
+            mark_rfp_as_submitted(rfp_id)
+            return jsonify({
+                "success": True,
+                "message": "Dry-run: proposal marked as submitted (EMAIL_PASSWORD not set).",
+                "rfp_id": rfp_id,
+                "email_sent_to": None
+            }), 200
 
-            email_body = f"""
+        # Compose email
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Proposal Submission for {rfp_title or rfp_id}"
+        msg["From"] = sender_email
+        msg["To"] = to_email
+
+        email_body = f"""
 Dear Procurement Team,
 
 Please find our technical and commercial proposal for the following RFP:
@@ -718,34 +734,41 @@ Email: {sender_email}
 Contact: simratpyrotech@gmail.com
 
 This is an automated submission. Please do not reply to this email.
-            """
-            
-            part = MIMEText(email_body, "plain")
-            msg.attach(part)
-            
+        """
+        part = MIMEText(email_body, "plain")
+        msg.attach(part)
 
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        # Attempt SMTP send and provide clearer error responses
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=15) as server:
                 server.login(sender_email, sender_password)
-                server.sendmail(sender_email, [to_email], msg.as_string())
-            
+                server.send_message(msg)
             print(f"✓ Proposal email sent to {to_email}")
 
             mark_rfp_as_submitted(rfp_id)
-            
+
             return jsonify({
                 "success": True,
                 "message": f"Proposal submitted successfully to {organization}",
                 "rfp_id": rfp_id,
                 "email_sent_to": to_email
-            })
-            
+            }), 200
+
+        except SMTPAuthenticationError as auth_err:
+            print(f"✗ SMTP Authentication Error: {str(auth_err)}")
+            return jsonify({
+                "success": False,
+                "error": "SMTP authentication failed. Ensure EMAIL_PASSWORD (app password) is set and valid, and that SMTP access is allowed.",
+                "details": str(auth_err)
+            }), 401
+
         except smtplib.SMTPException as smtp_err:
             print(f"✗ SMTP Error: {str(smtp_err)}")
             return jsonify({
                 "success": False,
                 "error": f"Failed to send email: {str(smtp_err)}"
             }), 500
-            
+
     except Exception as e:
         import traceback
         print(f"✗ Error in /submit-proposal: {str(e)}")
